@@ -49,6 +49,16 @@ func Test_New_does_not_start_MicroBatch(t *testing.T) {
 	assert.False(t, mb.isRunning.Load())
 }
 
+func Test_NewRunning_starts_MicroBatch(t *testing.T) {
+	c, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	mb, _ := NewRunning(c, newTestBatchProcessor())
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
+
+	assert.True(t, mb.isRunning.Load())
+}
+
 func Test_setIsRunning_updates_state(t *testing.T) {
 	mb, _ := newTestMicroBatch()
 	err := mb.setIsRunning(true)
@@ -84,7 +94,7 @@ func Test_Start_errors_on_second_call(t *testing.T) {
 
 	mb, _ := newTestMicroBatch()
 	go mb.Start(c)
-	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is riggered
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
 
 	err := mb.Start(c)
 
@@ -109,7 +119,7 @@ func Test_Submit_errors_on_nil_job(t *testing.T) {
 
 	mb, _ := newTestMicroBatch()
 	go mb.Start(c)
-	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is riggered
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
 
 	err := mb.Submit(nil)
 
@@ -123,7 +133,7 @@ func Test_Submit_submits_job(t *testing.T) {
 
 	mb, _ := newTestMicroBatch()
 	go mb.Start(c)
-	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is riggered
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
 
 	job := func(t *JobInput) *JobResult[*JobOutput] {
 		return &JobResult[*JobOutput]{}
@@ -139,7 +149,7 @@ func Test_Submit_processes_job_eventually(t *testing.T) {
 
 	mb, _ := newTestMicroBatch(Limit[*JobInput, *JobOutput](1))
 	go mb.Start(c)
-	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is riggered
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
 
 	var wg sync.WaitGroup
 	var check atomic.Bool
