@@ -9,10 +9,11 @@ func newTestBatchProcessor() *testBatchProcessor[*JobInput, *JobOutput] {
 	return &testBatchProcessor[*JobInput, *JobOutput]{}
 }
 
-func (bp *testBatchProcessor[T, R]) ProcessBatch(batch []Job[*JobInput, *JobOutput]) {
+func (bp *testBatchProcessor[T, R]) Process(batch []Job[*JobInput, *JobOutput]) error {
 	for _, j := range batch {
 		j(&JobInput{})
 	}
+	return nil
 }
 
 // Ensure testBatchProcessor conforms to the BatchProcessor interface.

@@ -7,4 +7,5 @@ var (
 	ErrIsNotRunning           = errors.New("micro-batch processor is not running")
 	ErrSameRunningState       = errors.New("micro-batch processor isRunning is already set")
 	ErrNilJob                 = errors.New("recieved nil job")
+	ErrStorageFull            = errors.New("storage is full can't append job")
 )

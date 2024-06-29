@@ -1,6 +1,6 @@
 .PHONY: deps build
 
-TAG=0.1.0
+TAG=0.2.0
 
 deps:
 	go mod tidy

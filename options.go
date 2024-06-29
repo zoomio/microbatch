@@ -18,3 +18,10 @@ func Cycle[T, R any](v time.Duration) Option[T, R] {
 		mb.cycle = v
 	}
 }
+
+// Storage sets the storage for the incoming jobs.
+func Storage[T, R any](v BatchStorage[T, R]) Option[T, R] {
+	return func(mb *MicroBatch[T, R]) {
+		mb.store = v
+	}
+}

@@ -7,16 +7,9 @@ type JobResult[R any] struct {
 
 type Job[T, R any] func(input T) *JobResult[R]
 
+// Implement this interface fro you specific batch processing.
 type BatchProcessor[T, R any] interface {
-	ProcessBatch(batch []Job[T, R])
+
+	// Processes given batch of jobs.
+	Process(batch []Job[T, R]) error
 }
-
-/* type MicroBatch[T, R any] interface {
-
-	// Start - spins up this micro-batch processor instance.
-	// Provided Context value c is used as a stopping mechanism when context is canceled.
-	Start(c context.Context) error
-
-	// Submit - submits the job for processing.
-	Submit(j Job[T, R]) error
-} */

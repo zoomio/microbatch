@@ -11,8 +11,9 @@ So the **microbatch** is a aimed to provide simple primitive for adopting micro-
 ## Usage
 
 - You'd need to implement `BatchProcessor` interface to handle your specific jobs.
-- New instance of the `MicroBatch` can be created with the `New(yourBatchProcessor)`.
+- New instance of the `MicroBatch` can be created with the `New(yourBatchProcessor, options...)`, options are used for customising configuration. 
 - Created instance of the `MicroBatch` can be started with the `yourMicroBatch.Start(c)`, where c - is a `context.Context`, `context.Context` is used for signalling when `MicroBatch` needs to stop (so use `context.WithCancel`).
 - New running instance of the `MicroBatch` can be created with the `NewRunning(c, yourBatchProcessor)`.
 - New job can be submitted to the `MicroBatch` via `yourMicroBatch.Submit(yourJob)`.
 - A job is an instance of the `Job` type.
+- Implement `BatchStorage` to supply your own custom storage via `Storage` option.

@@ -23,7 +23,7 @@ type MicroBatch[T, R any] struct {
 
 	// data
 	ch    chan Job[T, R]
-	batch []Job[T, R]
+	store BatchStorage[T, R]
 
 	// state
 	isRunning atomic.Bool
@@ -50,7 +50,10 @@ func New[T, R any](bp BatchProcessor[T, R], options ...Option[T, R]) (*MicroBatc
 	}
 
 	mb.ch = make(chan Job[T, R], mb.limit)
-	mb.setNewBatch()
+	// use in memory storage if nothing else is provided.
+	if mb.store == nil {
+		mb.store = NewInMemoryStorage[T, R](mb.limit)
+	}
 
 	return mb, nil
 }
@@ -84,15 +87,27 @@ func (mb *MicroBatch[T, R]) Start(c context.Context) error {
 
 			// make sure no more submits
 			err := mb.setIsRunning(false)
+			if err != nil {
+				return err
+			}
 
 			// need to complete already submitted jobs
-			mb.processBatch()
+			err = mb.processBatch()
+			if err != nil {
+				return err
+			}
 
 			return err
 		case <-ticker.C:
-			mb.processBatch()
+			err := mb.processBatch()
+			if err != nil {
+				return err
+			}
 		case j := <-mb.ch:
-			mb.appendJob(j)
+			err := mb.appendJob(j)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }
@@ -110,10 +125,6 @@ func (mb *MicroBatch[T, R]) Submit(j Job[T, R]) error {
 	return nil
 }
 
-func (mb *MicroBatch[T, R]) setNewBatch() {
-	mb.batch = make([]Job[T, R], 0, mb.limit)
-}
-
 func (mb *MicroBatch[T, R]) setIsRunning(v bool) error {
 	// synchronize with other potential writers
 	mb.mu.Lock()
@@ -126,26 +137,35 @@ func (mb *MicroBatch[T, R]) setIsRunning(v bool) error {
 	return nil
 }
 
-func (mb *MicroBatch[T, R]) appendJob(j Job[T, R]) {
+func (mb *MicroBatch[T, R]) appendJob(j Job[T, R]) error {
 	slog.Debug("appending job")
-	mb.batch = append(mb.batch, j)
-	if len(mb.batch) >= mb.limit {
-		slog.Debug("batch size is at the limit, process immediately")
-		mb.processBatch()
+	err := mb.store.Append(j)
+	if err != nil {
+		return err
 	}
+	if mb.store.Size() >= mb.limit {
+		slog.Debug("batch size is at the limit, process immediately")
+		return mb.processBatch()
+	}
+	return nil
 }
 
-func (mb *MicroBatch[T, R]) processBatch() {
-	if len(mb.batch) == 0 {
+func (mb *MicroBatch[T, R]) processBatch() error {
+	if mb.store.Size() == 0 {
 		slog.Debug("batch is empty nothing to do")
-		return
+		return nil
 	}
 
 	// copy processed batch and clear the internal to avoid side effects
-	b := make([]Job[T, R], len(mb.batch))
-	copy(b, mb.batch)
-	mb.setNewBatch()
+	b, err := mb.store.GetAll()
+	if err != nil {
+		return err
+	}
+	err = mb.store.Clear()
+	if err != nil {
+		return err
+	}
 
 	slog.Debug("processing batch", "batch_size", len(b))
-	mb.bp.ProcessBatch(b)
+	return mb.bp.Process(b)
 }
