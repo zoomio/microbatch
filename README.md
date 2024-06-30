@@ -17,3 +17,15 @@ So the **microbatch** is a aimed to provide simple primitive for adopting micro-
 - New job can be submitted to the `MicroBatch` via `yourMicroBatch.Submit(yourJob)`.
 - A job is an instance of the `Job` type.
 - Implement `BatchStorage` to supply your own custom storage via `Storage` option.
+
+## Changelog
+
+See [CHANGELOG.md](https://raw.githubusercontent.com/zoomio/microbatch/main/CHANGELOG.md)
+
+## Contributing
+
+See [CONTRIBUTING.md](https://raw.githubusercontent.com/zoomio/microbatch/main/CONTRIBUTING.md)
+
+## License
+
+Released under the [Apache License 2.0](https://raw.githubusercontent.com/zoomio/microbatch/main/LICENSE).
