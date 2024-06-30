@@ -167,6 +167,73 @@ func Test_Submit_processes_job_eventually(t *testing.T) {
 	assert.True(t, check.Load())
 }
 
+func Test_Submit_submits_and_completes_all_the_jobs(t *testing.T) {
+	c, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	bp := newTestBatchProcessor()
+	limit := Limit[*JobInput, *JobOutput](1) // set batch size to 1
+	mb, _ := New(bp, limit)
+	go mb.Start(c)
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// submit 3 jobs, which is more than the batch size 1
+	mb.Submit(func(t *JobInput) *JobResult[*JobOutput] {
+		defer wg.Done()
+		return &JobResult[*JobOutput]{}
+	})
+	mb.Submit(func(t *JobInput) *JobResult[*JobOutput] {
+		defer wg.Done()
+		return &JobResult[*JobOutput]{}
+	})
+	mb.Submit(func(t *JobInput) *JobResult[*JobOutput] {
+		defer wg.Done()
+		return &JobResult[*JobOutput]{}
+	})
+
+	// make sure to wait for the jobs completion
+	wg.Wait()
+
+	assert.Equal(t, 3, bp.getJobsDone())
+}
+
+func Test_Submit_submits_and_completes_all_the_jobs_eventually(t *testing.T) {
+	c, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	bp := newTestBatchProcessor()
+	limit := Limit[*JobInput, *JobOutput](5) // set batch size to 5
+	cycle := Cycle[*JobInput, *JobOutput](1 * time.Millisecond)
+	mb, _ := New(bp, limit, cycle)
+	go mb.Start(c)
+	time.Sleep(1 * time.Millisecond) // give it a tick so that Start routine is triggered
+
+	var wg sync.WaitGroup
+	wg.Add(3)
+
+	// submit only 3 jobs, which is less than the batch size 5
+	mb.Submit(func(t *JobInput) *JobResult[*JobOutput] {
+		defer wg.Done()
+		return &JobResult[*JobOutput]{}
+	})
+	mb.Submit(func(t *JobInput) *JobResult[*JobOutput] {
+		defer wg.Done()
+		return &JobResult[*JobOutput]{}
+	})
+	mb.Submit(func(t *JobInput) *JobResult[*JobOutput] {
+		defer wg.Done()
+		return &JobResult[*JobOutput]{}
+	})
+
+	// make sure to wait for the jobs completion
+	wg.Wait()
+
+	assert.Equal(t, 3, bp.getJobsDone())
+}
+
 func newTestMicroBatch(options ...Option[*JobInput, *JobOutput]) (*MicroBatch[*JobInput, *JobOutput], error) {
 	return New(newTestBatchProcessor(), options...)
 }
