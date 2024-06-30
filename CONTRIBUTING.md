@@ -12,7 +12,7 @@
 
 ## Release
 
-1. All notable changes comming with the new version should be documented in [CHANGELOG.md](https://raw.githubusercontent.com/zoomio/microbatch/master/CHANGELOG.md).
+1. All notable changes comming with the new version should be documented in [CHANGELOG.md](https://raw.githubusercontent.com/zoomio/microbatch/main/CHANGELOG.md).
 2. Run tests with `./_bin/test.sh`, make sure everything is passing.
 3. Bump the `TAG` variable inside the `Makefile` to the desired version, 
 4. Push and trigger new release on GitHub via `make tag`.
